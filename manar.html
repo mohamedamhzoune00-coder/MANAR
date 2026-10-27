@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MANAR — Smart Study Planner</title>
+  <meta name="description" content="Organise ton temps. Maîtrise tes études. Application de gestion d'études pour étudiants." />
+  <meta name="theme-color" content="#0F172A" />
+
+  <!-- PWA Manifest Inline Data URL -->
+  <link rel="manifest" href='data:application/json,{"name":"MANAR — Smart Study Planner","short_name":"MANAR","start_url":".","display":"standalone","background_color":"#FFF0F5","theme_color":"#E88BAA","icons":[{"src":"https://placehold.co/192x192/fff0f5/e88baa?text=MANAR","sizes":"192x192","type":"image/png"}]}' />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              softPink: '#F8C8DC',
+              blush: '#FFF0F5',
+              lavender: '#E6DDF5',
+              pastelPurple: '#CDB4DB',
+              cream: '#FFFBF7',
+              rose: '#E88BAA',
+              roseHover: '#D97797',
+              mauve: '#4A2E43',
+              mauveLight: '#7A5270',
+              bgLight: '#FFF8FA',
+              bgDark: '#261623'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Custom Scrollbars & Floral Aesthetics */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #F8C8DC;
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #5D4055;
+    }
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Safe Area Spacing for Mobile Bottom Nav */
+    .pb-safe {
+      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+
+    /* Floral Floating Animation */
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+    .animate-float {
+      animation: floatSoft 5s ease-in-out infinite;
+    }
+
+    .floral-pattern {
+      background-image: radial-gradient(#E88BAA 0.55px, transparent 0.55px), radial-gradient(#CDB4DB 0.55px, #FFF8FA 0.55px);
+      background-size: 22px 22px;
+      background-position: 0 0, 11px 11px;
+      opacity: 0.25;
+    }
+    .dark .floral-pattern {
+      background-image: radial-gradient(#E88BAA 0.55px, transparent 0.55px), radial-gradient(#5D4055 0.55px, #261623 0.55px);
+      opacity: 0.15;
+    }
+  </style>
+</head>
+<body class="bg-brand-bgLight dark:bg-brand-bgDark text-brand-mauve dark:text-pink-100 font-sans h-full transition-colors duration-300 relative">
+
+  <!-- Subtle Floral Watermark BG -->
+  <div class="fixed inset-0 floral-pattern pointer-events-none z-0"></div>
+
+  <div id="app" class="flex flex-col md:flex-row min-h-screen relative z-10">
+    
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden md:flex flex-col w-64 bg-white/80 dark:bg-brand-bgDark/90 backdrop-blur-md text-brand-mauve dark:text-pink-100 border-r border-brand-softPink/40 dark:border-brand-mauve/40 shrink-0 sticky top-0 h-screen justify-between z-30 shadow-sm">
+      <div>
+        <!-- Logo & Tagline -->
+        <div class="p-6 border-b border-brand-softPink/30 dark:border-brand-mauve/30">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-rose to-brand-pastelPurple flex items-center justify-center text-white shadow-lg shadow-brand-rose/20 animate-float">
+              <i data-lucide="flower-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-extrabold tracking-wider text-brand-mauve dark:text-pink-200">MANAR</h1>
+              <p class="text-[10px] text-brand-rose dark:text-brand-softPink font-semibold tracking-widest">FLORAL STUDY PLANNER</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="p-4 space-y-1.5">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Tableau de bord
+          </button>
+          <button onclick="switchTab('schedule')" id="nav-schedule" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="calendar" class="w-5 h-5"></i> Emploi du temps
+          </button>
+          <button onclick="switchTab('revision')" id="nav-revision" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="sparkles" class="w-5 h-5"></i> Révisions
+          </button>
+          <button onclick="switchTab('subjects')" id="nav-subjects" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="flower" class="w-5 h-5"></i> Matières
+          </button>
+          <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i> Tâches
+            <span id="badge-pending-tasks" class="ml-auto text-xs px-2.5 py-0.5 rounded-full bg-brand-rose/20 text-brand-rose dark:text-pink-300 font-bold">0</span>
+          </button>
+          <button onclick="switchTab('stats')" id="nav-stats" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="heart-pulse" class="w-5 h-5"></i> Statistiques
+          </button>
+          <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all text-brand-mauveLight dark:text-pink-200/70 hover:text-brand-mauve hover:bg-brand-blush/80 dark:hover:bg-brand-mauve/40">
+            <i data-lucide="settings" class="w-5 h-5"></i> Paramètres
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom Profile & Dark Mode Toggle -->
+      <div class="p-4 border-t border-brand-softPink/30 dark:border-brand-mauve/30 space-y-3">
+        <div class="flex items-center justify-between px-2">
+          <span class="text-xs font-semibold text-brand-mauveLight dark:text-pink-300">Mode sombre</span>
+          <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-brand-blush dark:bg-brand-mauve text-brand-rose dark:text-amber-300 transition shadow-xs">
+            <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+            <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+          </button>
+        </div>
+        <div class="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-gradient-to-r from-brand-blush to-brand-lavender/50 dark:from-brand-mauve/60 dark:to-brand-mauve/30 border border-brand-softPink/40">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-rose to-brand-pastelPurple text-white font-bold flex items-center justify-center text-sm shadow">
+            🌸
+          </div>
+          <div class="overflow-hidden">
+            <p class="text-sm font-bold truncate text-brand-mauve dark:text-white"><i>MANAR</i></p>
+            <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/70 truncate">S1 — Économie (Gr. A)</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="flex-1 flex flex-col min-w-0 pb-safe md:pb-8">
+      
+      <!-- MOBILE HEADER -->
+      <header class="md:hidden flex items-center justify-between px-4 py-3.5 bg-white/90 dark:bg-brand-bgDark/90 backdrop-blur-md border-b border-brand-softPink/40 text-brand-mauve dark:text-white sticky top-0 z-30 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-rose to-brand-pastelPurple flex items-center justify-center text-white font-bold">
+            <i data-lucide="flower-2" class="w-4 h-4"></i>
+          </div>
+          <span class="font-extrabold tracking-wide text-brand-mauve dark:text-pink-100">MANAR</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-brand-blush dark:bg-brand-mauve text-brand-rose dark:text-amber-300 touch-target flex items-center justify-center">
+            <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          </button>
+          <div class="w-8 h-8 rounded-full bg-brand-rose text-white font-bold text-xs flex items-center justify-center">🌸</div>
+        </div>
+      </header>
+
+      <!-- VIEW CONTAINERS -->
+      <div class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+        
+        <!-- ================= 1. DASHBOARD VIEW ================= -->
+        <section id="view-dashboard" class="tab-view space-y-6">
+          <!-- Header Greeting -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-pink-100 flex items-center gap-2">
+               <i>Bonjour MANAR</i>  <span class="animate-bounce inline-block">🌸</span>
+              </h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">"Fais de chaque jour une nouvelle floraison dans tes études."</p>
+            </div>
+            <div id="date-badge" class="px-4 py-2 rounded-2xl bg-white/80 dark:bg-brand-mauve/40 border border-brand-softPink/50 dark:border-brand-mauve/60 shadow-xs text-xs md:text-sm font-semibold text-brand-mauve dark:text-pink-200 self-start md:self-auto flex items-center gap-2 backdrop-blur-sm">
+              <i data-lucide="calendar-heart" class="w-4 h-4 text-brand-rose"></i>
+              <span id="current-date-text">Lundi 27 Octobre 2026</span>
+            </div>
+          </div>
+
+          <!-- Quick Stats Cards Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 md:p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm backdrop-blur-xs">
+              <div class="flex items-center justify-between text-brand-mauveLight mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-rose dark:text-pink-300">Aujourd'hui</span>
+                <i data-lucide="book-open" class="w-5 h-5 text-brand-rose"></i>
+              </div>
+              <p id="stat-today-sessions" class="text-xl md:text-2xl font-extrabold text-brand-mauve dark:text-white">0 session</p>
+              <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/70 mt-1">Planifiées ce jour</p>
+            </div>
+
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 md:p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm backdrop-blur-xs">
+              <div class="flex items-center justify-between text-brand-mauveLight mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-rose dark:text-pink-300">Temps d'étude</span>
+                <i data-lucide="clock" class="w-5 h-5 text-brand-pastelPurple"></i>
+              </div>
+              <p id="stat-today-hours" class="text-xl md:text-2xl font-extrabold text-brand-mauve dark:text-white">0h 00</p>
+              <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/70 mt-1">Temps total estimé</p>
+            </div>
+
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 md:p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm backdrop-blur-xs">
+              <div class="flex items-center justify-between text-brand-mauveLight mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-rose dark:text-pink-300">Progression</span>
+                <i data-lucide="sparkle" class="w-5 h-5 text-emerald-500"></i>
+              </div>
+              <p id="stat-weekly-progress" class="text-xl md:text-2xl font-extrabold text-brand-mauve dark:text-white">0%</p>
+              <div class="w-full bg-brand-blush dark:bg-brand-mauve/60 h-2 rounded-full mt-2 overflow-hidden">
+                <div id="stat-weekly-bar" class="bg-gradient-to-r from-brand-rose to-brand-pastelPurple h-full w-0 transition-all duration-500"></div>
+              </div>
+            </div>
+
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 md:p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm backdrop-blur-xs">
+              <div class="flex items-center justify-between text-brand-mauveLight mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-rose dark:text-pink-300">Tâches</span>
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-rose"></i>
+              </div>
+              <p id="stat-pending-tasks" class="text-xl md:text-2xl font-extrabold text-brand-mauve dark:text-white">0 restante</p>
+              <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/70 mt-1">À réaliser cette semaine</p>
+            </div>
+          </div>
+
+          <!-- Featured Card: Next Revision Session -->
+          <div class="bg-gradient-to-r from-brand-rose via-pink-400 to-brand-pastelPurple rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-40 h-40 bg-white/20 rounded-full blur-xl pointer-events-none"></div>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div class="space-y-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold backdrop-blur-xs border border-white/30">
+                  <span class="w-2 h-2 rounded-full bg-pink-200 animate-ping"></span>
+                  PROCHAINE SÉANCE DE RÉVISION 🌸
+                </div>
+                <h3 id="next-session-title" class="text-2xl md:text-3xl font-extrabold text-white">Mathématiques I</h3>
+                <div class="flex flex-wrap items-center gap-4 text-pink-100 text-sm">
+                  <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-4 h-4"></i> <span id="next-session-time">17:00 — 18:30</span></span>
+                  <span class="flex items-center gap-1.5"><i data-lucide="hourglass" class="w-4 h-4"></i> <span id="next-session-duration">1h30</span></span>
+                  <span class="flex items-center gap-1.5"><i data-lucide="flower" class="w-4 h-4"></i> Révision Approfondie</span>
+                </div>
+              </div>
+              <button onclick="startFocusedStudySession()" class="touch-target px-6 py-3.5 rounded-2xl bg-white text-brand-rose font-bold text-sm hover:bg-pink-50 transition shadow-md flex items-center justify-center gap-2 self-start md:self-auto shrink-0">
+                <i data-lucide="play" class="w-5 h-5 fill-current"></i> Commencer la révision
+              </button>
+            </div>
+          </div>
+
+          <!-- Today's Schedule & Quick Tasks Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Daily Timeline (2 cols on desktop) -->
+            <div class="lg:col-span-2 bg-white/80 dark:bg-brand-mauve/40 rounded-3xl p-5 md:p-6 border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm backdrop-blur-xs">
+              <div class="flex items-center justify-between mb-5">
+                <h3 class="font-extrabold text-lg text-brand-mauve dark:text-white flex items-center gap-2">
+                  <i data-lucide="list-ordered" class="w-5 h-5 text-brand-rose"></i> Programme du jour
+                </h3>
+                <span class="text-xs font-bold text-brand-rose bg-brand-blush dark:bg-brand-mauve/80 px-3 py-1 rounded-full" id="today-name-badge">Aujourd'hui</span>
+              </div>
+              <div id="today-timeline" class="space-y-4">
+                <!-- Dynamic timeline items rendered via JS -->
+              </div>
+            </div>
+
+            <!-- Urgent Tasks & Reminders (1 col) -->
+            <div class="bg-white/80 dark:bg-brand-mauve/40 rounded-3xl p-5 md:p-6 border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm flex flex-col justify-between space-y-4 backdrop-blur-xs">
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-extrabold text-lg text-brand-mauve dark:text-white flex items-center gap-2">
+                    <i data-lucide="heart" class="w-5 h-5 text-brand-rose"></i> Rappels & Priorités
+                  </h3>
+                  <button onclick="switchTab('tasks')" class="text-xs text-brand-rose hover:underline font-bold">Voir tout</button>
+                </div>
+                
+                <!-- Quick Reminders list -->
+                <div id="quick-reminders-list" class="space-y-3">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+
+              <!-- Weekly Progress Box -->
+              <div class="p-4 rounded-2xl bg-brand-blush/60 dark:bg-brand-mauve/60 border border-brand-softPink/40">
+                <div class="flex justify-between items-center text-xs font-bold text-brand-mauve dark:text-pink-200 mb-2">
+                  <span>Objectif Hebdomadaire</span>
+                  <span id="weekly-goal-percent">0%</span>
+                </div>
+                <div class="w-full bg-white dark:bg-brand-mauve/80 h-2.5 rounded-full overflow-hidden">
+                  <div id="weekly-goal-bar" class="h-full bg-gradient-to-r from-brand-rose to-brand-pastelPurple w-0 transition-all duration-500"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ================= 2. EMPLOI DU TEMPS VIEW ================= -->
+        <section id="view-schedule" class="tab-view hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Emploi du Temps</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Groupe A — Semestre 1 — Économie</p>
+            </div>
+          </div>
+
+          <!-- Mobile Day Switcher Tabs -->
+          <div class="md:hidden flex overflow-x-auto gap-2 pb-2 scrollbar-none" id="schedule-day-tabs">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Mobile Single Day Timeline View -->
+          <div class="md:hidden bg-white/80 dark:bg-brand-mauve/40 rounded-3xl p-4 border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm">
+            <h3 id="mobile-schedule-day-title" class="font-extrabold text-base text-brand-mauve dark:text-white mb-4 border-b border-brand-softPink/30 pb-2">
+              Lundi
+            </h3>
+            <div id="mobile-schedule-content" class="space-y-3">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Desktop Full Weekly Grid View -->
+          <div class="hidden md:block bg-white/80 dark:bg-brand-mauve/40 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm overflow-hidden backdrop-blur-xs">
+            <div class="grid grid-cols-5 border-b border-brand-softPink/40 dark:border-brand-mauve/40 text-center font-bold text-sm bg-brand-blush/50 dark:bg-brand-mauve/60 text-brand-mauve dark:text-pink-200 py-3.5">
+              <div>Lundi</div>
+              <div>Mardi</div>
+              <div>Mercredi</div>
+              <div>Jeudi</div>
+              <div>Vendredi</div>
+            </div>
+            <div class="grid grid-cols-5 divide-x divide-brand-softPink/30 dark:divide-brand-mauve/30 min-h-[450px]">
+              <!-- Lundi -->
+              <div class="p-3 space-y-3 bg-brand-blush/20 dark:bg-transparent">
+                <div class="p-3.5 rounded-2xl bg-brand-blush dark:bg-brand-mauve/60 border border-brand-softPink/50 space-y-1">
+                  <span class="text-[11px] font-bold text-brand-rose bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">08:00 – 10:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Intro. aux Sciences Économiques</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">Mme. El Kouhen</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 7</span>
+                </div>
+              </div>
+              <!-- Mardi -->
+              <div class="p-3 space-y-3">
+                <div class="p-3.5 rounded-2xl bg-purple-50 dark:bg-brand-mauve/60 border border-purple-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-purple-600 dark:text-pink-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">10:00 – 12:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Microéconomie I</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">M. Sadgui</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 8</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-pink-50 dark:bg-brand-mauve/60 border border-pink-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-pink-600 dark:text-pink-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">14:00 – 16:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Mathématiques I</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">M. Serhani</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 4</span>
+                </div>
+              </div>
+              <!-- Mercredi -->
+              <div class="p-3 space-y-3 bg-brand-blush/20 dark:bg-transparent">
+                <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-brand-mauve/60 border border-amber-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-amber-600 dark:text-amber-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">10:00 – 12:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Économie d'Entreprise</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">Mme. Benmoussa</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 4</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-brand-mauve/60 border border-rose-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-rose-600 dark:text-rose-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">14:00 – 16:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Méthodologie de Travail Univ.</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">Mme. Annour</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 9</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-teal-50 dark:bg-brand-mauve/60 border border-teal-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-teal-600 dark:text-teal-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">16:00 – 18:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Intro. à l'Étude de Droit</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">M. Ninou</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 3</span>
+                </div>
+              </div>
+              <!-- Jeudi -->
+              <div class="p-4 flex flex-col items-center justify-center text-center text-brand-mauveLight dark:text-pink-200/60">
+                <i data-lucide="sparkles" class="w-8 h-8 mb-2 opacity-60 text-brand-rose"></i>
+                <p class="text-xs font-bold">Pas de cours universitaire</p>
+                <p class="text-[10px] mt-1 text-brand-mauveLight">Journée idéale pour réviser !</p>
+              </div>
+              <!-- Vendredi -->
+              <div class="p-3 space-y-3 bg-brand-blush/20 dark:bg-transparent">
+                <div class="p-3.5 rounded-2xl bg-indigo-50 dark:bg-brand-mauve/60 border border-indigo-200/50 space-y-1">
+                  <span class="text-[11px] font-bold text-indigo-600 dark:text-indigo-300 bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">10:00 – 12:00</span>
+                  <h4 class="font-bold text-xs text-brand-mauve dark:text-white mt-1">Comptabilité Générale I</h4>
+                  <p class="text-[11px] text-brand-mauveLight dark:text-pink-200/80">Mme. Berrada Kaoutar</p>
+                  <span class="inline-block text-[10px] text-brand-mauve font-semibold">📍 Amphi 9</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= 3. RÉVISIONS VIEW ================= -->
+        <section id="view-revision" class="tab-view hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Programme de Révision</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Sessions régulières de 1h30 à 2h pour ancrer les connaissances</p>
+            </div>
+          </div>
+
+          <!-- Revision List Grid -->
+          <div id="revision-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- ================= 4. MATIÈRES VIEW ================= -->
+        <section id="view-subjects" class="tab-view hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Matières du Semestre 1</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Vue détaillée et suivi par module</p>
+            </div>
+          </div>
+
+          <!-- Subjects Grid -->
+          <div id="subjects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- ================= 5. TÂCHES VIEW ================= -->
+        <section id="view-tasks" class="tab-view hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Gestionnaire de Tâches</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Organise tes devoirs, exercices et lectures</p>
+            </div>
+            <button onclick="openAddTaskModal()" class="touch-target px-5 py-2.5 rounded-2xl bg-brand-rose hover:bg-brand-roseHover text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition">
+              <i data-lucide="plus" class="w-4 h-4"></i> Nouvelle tâche
+            </button>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex flex-wrap items-center gap-2 border-b border-brand-softPink/40 dark:border-brand-mauve/40 pb-3">
+            <button onclick="filterTasks('all')" id="task-filter-all" class="task-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-brand-rose text-white shadow-xs">Toutes</button>
+            <button onclick="filterTasks('urgent')" id="task-filter-urgent" class="task-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-brand-mauve/60 text-brand-mauve dark:text-pink-200 hover:bg-brand-blush">🔴 Urgent</button>
+            <button onclick="filterTasks('pending')" id="task-filter-pending" class="task-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-brand-mauve/60 text-brand-mauve dark:text-pink-200 hover:bg-brand-blush">En cours</button>
+            <button onclick="filterTasks('completed')" id="task-filter-completed" class="task-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-brand-mauve/60 text-brand-mauve dark:text-pink-200 hover:bg-brand-blush">Terminées</button>
+          </div>
+
+          <!-- Tasks List Container -->
+          <div id="tasks-list" class="space-y-3">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- ================= 6. STATISTIQUES VIEW ================= -->
+        <section id="view-stats" class="tab-view hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Statistiques d'Étude</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Analyse de tes performances et régularité</p>
+            </div>
+          </div>
+
+          <!-- Stats Overview Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm text-center">
+              <span class="text-xs text-brand-mauveLight dark:text-pink-300 font-bold">Total Heures Éditées</span>
+              <p id="stats-total-hours" class="text-2xl font-extrabold text-brand-rose mt-1">12.5 h</p>
+            </div>
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm text-center">
+              <span class="text-xs text-brand-mauveLight dark:text-pink-300 font-bold">Sessions Accomplies</span>
+              <p id="stats-completed-sessions" class="text-2xl font-extrabold text-emerald-500 mt-1">7 / 7</p>
+            </div>
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm text-center">
+              <span class="text-xs text-brand-mauveLight dark:text-pink-300 font-bold">Taux de Réalisation</span>
+              <p id="stats-completion-rate" class="text-2xl font-extrabold text-brand-pastelPurple mt-1">100%</p>
+            </div>
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-4 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm text-center">
+              <span class="text-xs text-brand-mauveLight dark:text-pink-300 font-bold">Série Actuelle (Streak)</span>
+              <p id="stats-streak" class="text-2xl font-extrabold text-amber-500 mt-1">🌸 5 Jours</p>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm">
+              <h3 class="font-bold text-base text-brand-mauve dark:text-white mb-4">Heures d'Étude cette Semaine</h3>
+              <div class="relative h-64">
+                <canvas id="weeklyHoursChart"></canvas>
+              </div>
+            </div>
+            <div class="bg-white/80 dark:bg-brand-mauve/40 p-5 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm">
+              <h3 class="font-bold text-base text-brand-mauve dark:text-white mb-4">Progression par Matière</h3>
+              <div id="subject-progress-bars" class="space-y-4">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= 7. PARAMÈTRES VIEW ================= -->
+        <section id="view-settings" class="tab-view hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl md:text-3xl font-extrabold text-brand-mauve dark:text-white">Paramètres</h2>
+              <p class="text-brand-mauveLight dark:text-pink-200/80 text-sm mt-1">Personnalise ton expérience MANAR</p>
+            </div>
+          </div>
+
+          <div class="bg-white/80 dark:bg-brand-mauve/40 rounded-3xl border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm divide-y divide-brand-softPink/30 dark:divide-brand-mauve/30">
+            <!-- Dark mode toggle -->
+            <div class="p-5 flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-brand-mauve dark:text-white">Apparence</h4>
+                <p class="text-xs text-brand-mauveLight dark:text-pink-200/70">Bascule entre le mode clair pastel et le mode sombre mauve</p>
+              </div>
+              <button onclick="toggleDarkMode()" class="px-4 py-2 rounded-2xl bg-brand-blush dark:bg-brand-mauve text-xs font-bold text-brand-mauve dark:text-pink-200 border border-brand-softPink/40">
+                Changer d'apparence
+              </button>
+            </div>
+
+            <!-- Notifications toggle -->
+            <div class="p-5 flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-brand-mauve dark:text-white">Rappels visuels & notifications</h4>
+                <p class="text-xs text-brand-mauveLight dark:text-pink-200/70">Recevoir un signal visuel 30 min avant le début des révisions</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setting-reminders" checked onchange="toggleReminders(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-brand-blush peer-focus:outline-none rounded-full peer dark:bg-brand-mauve peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-slate-600 peer-checked:bg-brand-rose"></div>
+              </label>
+            </div>
+
+            <!-- Bilan du dimanche trigger -->
+            <div class="p-5 flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-brand-mauve dark:text-white">Bilan de la Semaine</h4>
+                <p class="text-xs text-brand-mauveLight dark:text-pink-200/70">Afficher la synthèse de ta semaine de révision</p>
+              </div>
+              <button onclick="openSundayReviewModal()" class="px-4 py-2 rounded-2xl bg-brand-pastelPurple text-brand-mauve font-bold text-xs shadow-xs hover:brightness-105">
+                Ouvrir le bilan
+              </button>
+            </div>
+
+            <!-- Reset data -->
+            <div class="p-5 flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-sm text-rose-500">Réinitialiser les données demo</h4>
+                <p class="text-xs text-brand-mauveLight dark:text-pink-200/70">Remettre l'application à l'état initial (Schedule & Sessions par défaut)</p>
+              </div>
+              <button onclick="resetDemoData()" class="px-4 py-2 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold text-xs hover:bg-rose-100 transition">
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-brand-bgDark/95 backdrop-blur-md text-brand-mauve dark:text-white border-t border-brand-softPink/40 z-40 flex items-center justify-around px-2 py-2">
+      <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mob-nav-btn flex flex-col items-center gap-1 p-2 text-brand-rose text-[10px] font-bold touch-target">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>Accueil</span>
+      </button>
+      <button onclick="switchTab('schedule')" id="mob-nav-schedule" class="mob-nav-btn flex flex-col items-center gap-1 p-2 text-brand-mauveLight dark:text-pink-200/60 text-[10px] font-bold touch-target">
+        <i data-lucide="calendar" class="w-5 h-5"></i>
+        <span>Emploi</span>
+      </button>
+      <button onclick="switchTab('revision')" id="mob-nav-revision" class="mob-nav-btn flex flex-col items-center gap-1 p-2 text-brand-mauveLight dark:text-pink-200/60 text-[10px] font-bold touch-target">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        <span>Révisions</span>
+      </button>
+      <button onclick="switchTab('tasks')" id="mob-nav-tasks" class="mob-nav-btn flex flex-col items-center gap-1 p-2 text-brand-mauveLight dark:text-pink-200/60 text-[10px] font-bold touch-target">
+        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        <span>Tâches</span>
+      </button>
+      <button onclick="switchTab('stats')" id="mob-nav-stats" class="mob-nav-btn flex flex-col items-center gap-1 p-2 text-brand-mauveLight dark:text-pink-200/60 text-[10px] font-bold touch-target">
+        <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+        <span>Stats</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ================= MODALS & OVERLAYS ================= -->
+
+  <!-- 1. SMART FOCUS TIMER OVERLAY -->
+  <div id="modal-timer" class="fixed inset-0 bg-brand-mauve/95 backdrop-blur-md z-50 hidden flex flex-col justify-between p-6 text-white animate-fade-in">
+    <!-- Top Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-brand-rose animate-ping"></div>
+        <span class="text-xs font-bold uppercase tracking-widest text-pink-200">MODE FOCUS APPRENTISSAGE FLORAL 🌸</span>
+      </div>
+      <button onclick="closeStudyTimer()" class="p-2 rounded-full bg-white/10 text-pink-200 hover:text-white touch-target flex items-center justify-center">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+    </div>
+
+    <!-- Center Display -->
+    <div class="flex flex-col items-center text-center my-auto space-y-6">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-pink-100 text-sm font-semibold border border-white/20">
+        <i data-lucide="flower-2" class="w-4 h-4 text-brand-softPink"></i>
+        <span id="timer-subject-name">Mathématiques I</span>
+      </div>
+
+      <p id="timer-objective-text" class="text-pink-100/90 text-base max-w-md">30 min — Comprendre le cours & relire les concepts clés</p>
+
+      <!-- Large Countdown Display -->
+      <div class="relative flex items-center justify-center">
+        <div class="text-7xl md:text-9xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-pink-200 font-mono py-4" id="timer-display">
+          50:00
+        </div>
+      </div>
+
+      <!-- Session Phase Indicator -->
+      <span id="timer-phase-badge" class="px-4 py-1 rounded-full bg-brand-rose/30 text-pink-100 text-xs font-bold border border-brand-rose/40">
+        Bloc de travail actif 🌺
+      </span>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="max-w-md w-full mx-auto space-y-4 mb-4">
+      <div class="flex items-center justify-center gap-4">
+        <button id="btn-timer-toggle" onclick="toggleTimer()" class="touch-target flex-1 py-4 rounded-2xl bg-brand-rose hover:bg-brand-roseHover text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition">
+          <i data-lucide="pause" class="w-5 h-5 fill-current"></i> Pause
+        </button>
+        <button onclick="finishStudyTimer()" class="touch-target px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition">
+          <i data-lucide="check-circle" class="w-5 h-5"></i> Terminer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. REVISION DETAIL MODAL -->
+  <div id="modal-revision-detail" class="fixed inset-0 bg-brand-mauve/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-brand-mauve rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-brand-softPink/50 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('modal-revision-detail')" class="absolute top-5 right-5 text-brand-mauveLight hover:text-brand-mauve dark:hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div>
+        <span id="modal-rev-day" class="text-xs font-extrabold text-brand-rose uppercase tracking-wider">LUNDI</span>
+        <h3 id="modal-rev-subject" class="text-2xl font-extrabold text-brand-mauve dark:text-white mt-1">Mathématiques I</h3>
+        <p id="modal-rev-time" class="text-sm text-brand-mauveLight dark:text-pink-200/80">10:00 → 12:00 (Durée: 2h)</p>
+      </div>
+
+      <!-- Checklist -->
+      <div class="space-y-3">
+        <h4 class="font-bold text-sm text-brand-mauve dark:text-pink-100">Structure de la séance :</h4>
+        <div id="modal-rev-checklist" class="space-y-2">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Notes Area -->
+      <div class="space-y-2">
+        <h4 class="font-bold text-sm text-brand-mauve dark:text-pink-100">Notes de révision :</h4>
+        <textarea id="modal-rev-notes" rows="3" placeholder="Ajoute tes remarques, formules ou difficultés ici..." class="w-full p-3.5 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-rose dark:text-white"></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3 pt-2">
+        <button id="modal-rev-start-btn" class="flex-1 py-3 rounded-2xl bg-brand-rose hover:bg-brand-roseHover text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-xs">
+          <i data-lucide="play" class="w-4 h-4 fill-current"></i> Commencer
+        </button>
+        <button id="modal-rev-complete-btn" class="flex-1 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm flex items-center justify-center gap-2 transition shadow-xs">
+          <i data-lucide="check" class="w-4 h-4"></i> Marquer Terminé
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ADD / EDIT TASK MODAL -->
+  <div id="modal-task-form" class="fixed inset-0 bg-brand-mauve/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-brand-mauve rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-brand-softPink/50 relative">
+      <button onclick="closeModal('modal-task-form')" class="absolute top-5 right-5 text-brand-mauveLight hover:text-brand-mauve dark:hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 id="task-modal-title" class="text-xl font-extrabold text-brand-mauve dark:text-white">Nouvelle Tâche</h3>
+
+      <form id="form-task" onsubmit="saveTask(event)" class="space-y-4">
+        <input type="hidden" id="task-id" value="" />
+        <div>
+          <label class="block text-xs font-bold text-brand-mauve dark:text-pink-200 mb-1">Titre de la tâche</label>
+          <input type="text" id="task-title" required placeholder="ex: Faire 5 exercices de comptabilité" class="w-full p-3.5 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-rose dark:text-white" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-brand-mauve dark:text-pink-200 mb-1">Matière associée</label>
+          <select id="task-subject" class="w-full p-3.5 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-rose dark:text-white">
+            <option value="General">Général</option>
+            <option value="Intro Économie">Intro. aux Sciences Économiques</option>
+            <option value="Comptabilité">Comptabilité Générale I</option>
+            <option value="Droit">Intro. à l'Étude de Droit</option>
+            <option value="Microéconomie">Microéconomie I</option>
+            <option value="Mathématiques">Mathématiques I</option>
+            <option value="Éco Entreprise">Économie d'Entreprise</option>
+            <option value="MTU">Méthodologie (MTU)</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-brand-mauve dark:text-pink-200 mb-1">Priorité</label>
+            <select id="task-priority" class="w-full p-3.5 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-rose dark:text-white">
+              <option value="normal">🟢 Normal</option>
+              <option value="important">🟡 Important</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-brand-mauve dark:text-pink-200 mb-1">Échéance</label>
+            <input type="text" id="task-deadline" placeholder="ex: Vendredi" class="w-full p-3.5 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-rose dark:text-white" />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-brand-rose hover:bg-brand-roseHover text-white font-bold text-sm shadow-md transition">
+          Enregistrer la tâche
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. SUNDAY REVIEW MODAL -->
+  <div id="modal-sunday-review" class="fixed inset-0 bg-brand-mauve/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-brand-mauve rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl border border-brand-softPink/50 text-center relative">
+      <button onclick="closeModal('modal-sunday-review')" class="absolute top-5 right-5 text-brand-mauveLight hover:text-brand-mauve dark:hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="w-16 h-16 rounded-full bg-brand-blush text-brand-rose flex items-center justify-center mx-auto text-3xl shadow-xs animate-float">
+        🌸
+      </div>
+
+      <div>
+        <h3 class="text-2xl font-extrabold text-brand-mauve dark:text-white">Bilan de la Semaine</h3>
+        <p class="text-xs text-brand-mauveLight dark:text-pink-200/70 mt-1">Synthèse automatique de tes efforts d'apprentissage</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 py-2 text-left">
+        <div class="p-3.5 bg-brand-blush/60 dark:bg-brand-bgDark rounded-2xl border border-brand-softPink/40">
+          <span class="text-[11px] text-brand-mauveLight dark:text-pink-300 font-semibold">Sessions réalisées</span>
+          <p id="review-sessions-completed" class="font-extrabold text-brand-mauve dark:text-white text-base">0 / 7</p>
+        </div>
+        <div class="p-3.5 bg-brand-blush/60 dark:bg-brand-bgDark rounded-2xl border border-brand-softPink/40">
+          <span class="text-[11px] text-brand-mauveLight dark:text-pink-300 font-semibold">Tâches terminées</span>
+          <p id="review-tasks-completed" class="font-extrabold text-brand-mauve dark:text-white text-base">0</p>
+        </div>
+      </div>
+
+      <!-- Motivation Message Container -->
+      <div id="review-motivation-box" class="p-4 rounded-2xl bg-brand-blush dark:bg-brand-mauve/80 border border-brand-softPink text-brand-mauve dark:text-pink-100 font-semibold text-sm">
+        <!-- Rendered by JS -->
+      </div>
+
+      <button onclick="closeModal('modal-sunday-review')" class="w-full py-3.5 rounded-2xl bg-brand-mauve text-white dark:bg-pink-100 dark:text-brand-mauve font-bold text-sm shadow-md">
+        Fermer le bilan
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full opacity-0 transition-all duration-300 bg-brand-mauve text-white px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-brand-softPink/40">
+    <i data-lucide="sparkles" class="w-5 h-5 text-brand-rose" id="toast-icon"></i>
+    <span id="toast-message" class="text-sm font-semibold">Notification</span>
+  </div>
+
+  <!-- JavaScript Code Section -->
+  <script>
+    /* ==========================================================================
+       1. INITIAL DEMO DATA & STATE MANAGEMENT
+       ========================================================================== */
+
+    const INITIAL_REVISIONS = [
+      {
+        id: 'rev-1',
+        day: 'Lundi',
+        dayIndex: 1,
+        time: '15:00 – 16:30',
+        duration: '1h30',
+        subject: 'Intro. aux Sciences Économiques',
+        subjectKey: 'Intro Économie',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Comprendre le cours', done: false },
+          { text: 'Exercices / Fiches', done: false },
+          { text: 'Résumé & Auto-évaluation', done: false }
+        ]
+      },
+      {
+        id: 'rev-2',
+        day: 'Mardi',
+        dayIndex: 2,
+        time: '17:00 – 18:30',
+        duration: '1h30',
+        subject: 'Microéconomie I',
+        subjectKey: 'Microéconomie',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Comprendre le cours', done: false },
+          { text: 'Exercices d’application', done: false },
+          { text: 'Résumé & Auto-évaluation', done: false }
+        ]
+      },
+      {
+        id: 'rev-3',
+        day: 'Mercredi',
+        dayIndex: 3,
+        time: '19:00 – 20:30',
+        duration: '1h30',
+        subject: "Économie d'Entreprise + Droit",
+        subjectKey: 'Éco Entreprise',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Lecture rapide synthétique', done: false },
+          { text: 'Exercices de cas pratiques', done: false },
+          { text: 'Auto-évaluation', done: false }
+        ]
+      },
+      {
+        id: 'rev-4',
+        day: 'Jeudi',
+        dayIndex: 4,
+        time: '10:00 – 12:00',
+        duration: '2h00',
+        subject: 'Mathématiques I',
+        subjectKey: 'Mathématiques',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Comprendre le cours (30 min)', done: false },
+          { text: 'Résolution d’exercices (60 min)', done: false },
+          { text: 'Résumé & Auto-évaluation (30 min)', done: false }
+        ]
+      },
+      {
+        id: 'rev-5',
+        day: 'Vendredi',
+        dayIndex: 5,
+        time: '15:00 – 16:30',
+        duration: '1h30',
+        subject: 'Comptabilité Générale I',
+        subjectKey: 'Comptabilité',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Revue du journal & grand livre', done: false },
+          { text: 'Exercices d’écritures', done: false },
+          { text: 'Vérification des bilans', done: false }
+        ]
+      },
+      {
+        id: 'rev-6',
+        day: 'Samedi',
+        dayIndex: 6,
+        time: '10:00 – 12:00',
+        duration: '2h00',
+        subject: 'Microéconomie + Mathématiques',
+        subjectKey: 'Microéconomie',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Révisions croisées', done: false },
+          { text: 'Série d’exercices intenses', done: false }
+        ]
+      },
+      {
+        id: 'rev-7',
+        day: 'Dimanche',
+        dayIndex: 0,
+        time: '10:00 – 12:00',
+        duration: '2h00',
+        subject: 'Comptabilité + Révision Générale',
+        subjectKey: 'Comptabilité',
+        completed: false,
+        notes: '',
+        checklist: [
+          { text: 'Synthèse globale de la semaine', done: false },
+          { text: 'Préparation du planning suivant', done: false }
+        ]
+      }
+    ];
+
+    const INITIAL_SUBJECTS = [
+      { name: 'Intro. aux Sciences Économiques', key: 'Intro Économie', sessions: 1, color: 'from-brand-rose to-pink-300', icon: 'flower-2' },
+      { name: 'Comptabilité Générale I', key: 'Comptabilité', sessions: 2, color: 'from-purple-400 to-brand-pastelPurple', icon: 'calculator' },
+      { name: "Intro. à l'Étude de Droit", key: 'Droit', sessions: 1, color: 'from-pink-400 to-brand-softPink', icon: 'scale' },
+      { name: 'Microéconomie I', key: 'Microéconomie', sessions: 2, color: 'from-brand-rose to-rose-400', icon: 'trending-up' },
+      { name: 'Mathématiques I', key: 'Mathématiques', sessions: 2, color: 'from-brand-pastelPurple to-indigo-300', icon: 'binary' },
+      { name: "Économie d'Entreprise", key: 'Éco Entreprise', sessions: 1, color: 'from-amber-300 to-pink-300', icon: 'briefcase' },
+      { name: 'Méthodologie de Travail Univ.', key: 'MTU', sessions: 1, color: 'from-pink-300 to-brand-lavender', icon: 'graduation-cap' }
+    ];
+
+    const INITIAL_TASKS = [
+      { id: 't-1', title: 'Faire 5 exercices de comptabilité', subject: 'Comptabilité', priority: 'important', deadline: 'Vendredi', completed: false },
+      { id: 't-2', title: 'Relire le chapitre 2 de Microéconomie', subject: 'Microéconomie', priority: 'normal', deadline: 'Mardi', completed: true },
+      { id: 't-3', title: 'Préparer la fiche de résumé Droit', subject: 'Droit', priority: 'urgent', deadline: 'Mercredi', completed: false }
+    ];
+
+    // LocalStorage Keys
+    const STORAGE_KEY_REVISIONS = 'manar_revisions_v1';
+    const STORAGE_KEY_TASKS = 'manar_tasks_v1';
+    const STORAGE_KEY_SETTINGS = 'manar_settings_v1';
+
+    // Application State
+    let state = {
+      revisions: [],
+      tasks: [],
+      settings: {
+        darkMode: false,
+        reminders: true
+      },
+      activeTab: 'dashboard',
+      selectedRevisionId: null,
+      selectedScheduleDay: 'Lundi'
+    };
+
+    // Timer State
+    let timerInterval = null;
+    let timerSecondsLeft = 50 * 60; // 50 minutes
+    let isTimerRunning = false;
+    let timerPhase = 'work'; // 'work' or 'break'
+
+    /* ==========================================================================
+       2. INITIALIZATION & LOCALSTORAGE
+       ========================================================================== */
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      initTheme();
+      renderAll();
+      initChart();
+      lucide.createIcons();
+
+      // Check for Sunday review display condition
+      const today = new Date().getDay();
+      if (today === 0) {
+        setTimeout(() => showToast('🌸 Dimanche ! Pense à consulter ton bilan hebdomadaire.'), 1500);
+      }
+    });
+
+    function loadState() {
+      const savedRevisions = localStorage.getItem(STORAGE_KEY_REVISIONS);
+      const savedTasks = localStorage.getItem(STORAGE_KEY_TASKS);
+      const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
+
+      state.revisions = savedRevisions ? JSON.parse(savedRevisions) : INITIAL_REVISIONS;
+      state.tasks = savedTasks ? JSON.parse(savedTasks) : INITIAL_TASKS;
+      state.settings = savedSettings ? JSON.parse(savedSettings) : { darkMode: false, reminders: true };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY_REVISIONS, JSON.stringify(state.revisions));
+      localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(state.tasks));
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(state.settings));
+    }
+
+    function resetDemoData() {
+      state.revisions = INITIAL_REVISIONS;
+      state.tasks = INITIAL_TASKS;
+      saveState();
+      renderAll();
+      showToast('Données réinitialisées avec succès ! 🌸');
+    }
+
+    /* ==========================================================================
+       3. NAVIGATION & UI CONTROLS
+       ========================================================================== */
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+
+      // Hide all tabs
+      document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+      // Show target tab
+      const target = document.getElementById(`view-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      // Update Desktop Nav styles
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-blush', 'text-brand-rose', 'font-bold', 'dark:bg-brand-mauve/60');
+        btn.classList.add('text-brand-mauveLight', 'dark:text-pink-200/70');
+      });
+      const activeDesktop = document.getElementById(`nav-${tabId}`);
+      if (activeDesktop) {
+        activeDesktop.classList.add('bg-brand-blush', 'text-brand-rose', 'font-bold', 'dark:bg-brand-mauve/60');
+        activeDesktop.classList.remove('text-brand-mauveLight', 'dark:text-pink-200/70');
+      }
+
+      // Update Mobile Nav styles
+      document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+        btn.classList.remove('text-brand-rose');
+        btn.classList.add('text-brand-mauveLight', 'dark:text-pink-200/60');
+      });
+      const activeMobile = document.getElementById(`mob-nav-${tabId}`);
+      if (activeMobile) {
+        activeMobile.classList.add('text-brand-rose');
+        activeMobile.classList.remove('text-brand-mauveLight', 'dark:text-pink-200/60');
+      }
+
+      // Refresh Chart if stats tab selected
+      if (tabId === 'stats') {
+        setTimeout(updateChartData, 100);
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleDarkMode() {
+      state.settings.darkMode = !state.settings.darkMode;
+      saveState();
+      initTheme();
+    }
+
+    function initTheme() {
+      if (state.settings.darkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    function toggleReminders(enabled) {
+      state.settings.reminders = enabled;
+      saveState();
+      showToast(enabled ? 'Rappels visuels activés 🌸' : 'Rappels visuels désactivés');
+    }
+
+    /* ==========================================================================
+       4. RENDERERS
+       ========================================================================== */
+
+    function renderAll() {
+      renderDashboard();
+      renderScheduleView();
+      renderRevisionView();
+      renderSubjectsView();
+      renderTasksView();
+      renderStatsView();
+      lucide.createIcons();
+    }
+
+    // --- DASHBOARD RENDERER ---
+    function renderDashboard() {
+      // Completed revision sessions count
+      const totalRev = state.revisions.length;
+      const completedRev = state.revisions.filter(r => r.completed).length;
+      const progressPercent = Math.round((completedRev / totalRev) * 100);
+
+      // Pending tasks count
+      const pendingTasksCount = state.tasks.filter(t => !t.completed).length;
+      document.getElementById('badge-pending-tasks').innerText = pendingTasksCount;
+
+      // Update Dashboard Stats Cards
+      document.getElementById('stat-today-sessions').innerText = `${completedRev} / ${totalRev}`;
+      document.getElementById('stat-weekly-progress').innerText = `${progressPercent}%`;
+      document.getElementById('stat-weekly-bar').style.width = `${progressPercent}%`;
+      document.getElementById('stat-pending-tasks').innerText = `${pendingTasksCount} restante${pendingTasksCount > 1 ? 's' : ''}`;
+      document.getElementById('weekly-goal-percent').innerText = `${progressPercent}%`;
+      document.getElementById('weekly-goal-bar').style.width = `${progressPercent}%`;
+
+      // Next session detection (finding first uncompleted session)
+      const nextSession = state.revisions.find(r => !r.completed) || state.revisions[0];
+      if (nextSession) {
+        document.getElementById('next-session-title').innerText = nextSession.subject;
+        document.getElementById('next-session-time').innerText = `${nextSession.day} ${nextSession.time}`;
+        document.getElementById('next-session-duration').innerText = nextSession.duration;
+      }
+
+      // Render Today's Timeline
+      const timelineContainer = document.getElementById('today-timeline');
+      timelineContainer.innerHTML = '';
+
+      // Merge Course Schedule + Revisions for display
+      const todayCourses = [
+        { time: '08:00 – 10:00', title: 'Intro. aux Sciences Économiques', type: 'Cours (Amphi 7)', color: 'border-brand-rose' },
+        { time: '15:00 – 16:30', title: 'Révision Intro. Sciences Éco', type: 'Révision Perso', color: 'border-brand-pastelPurple' }
+      ];
+
+      todayCourses.forEach(item => {
+        const div = document.createElement('div');
+        div.className = `flex items-start gap-4 p-3.5 rounded-2xl bg-brand-blush/40 dark:bg-brand-mauve/60 border-l-4 ${item.color}`;
+        div.innerHTML = `
+          <div class="text-xs font-bold text-brand-mauveLight dark:text-pink-300 w-24 shrink-0">${item.time}</div>
+          <div>
+            <h4 class="font-bold text-sm text-brand-mauve dark:text-white">${item.title}</h4>
+            <span class="text-xs text-brand-mauveLight dark:text-pink-200/70">${item.type}</span>
+          </div>
+        `;
+        timelineContainer.appendChild(div);
+      });
+
+      // Quick Reminders list
+      const remindersContainer = document.getElementById('quick-reminders-list');
+      remindersContainer.innerHTML = '';
+      const urgentTasks = state.tasks.filter(t => !t.completed && t.priority === 'urgent').slice(0, 3);
+      
+      if (urgentTasks.length === 0) {
+        remindersContainer.innerHTML = `
+          <div class="text-xs text-brand-mauveLight dark:text-pink-200/70 py-3 text-center">Aucune priorité urgente 🌸</div>
+        `;
+      } else {
+        urgentTasks.forEach(t => {
+          const div = document.createElement('div');
+          div.className = 'p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/50 flex items-center justify-between';
+          div.innerHTML = `
+            <div>
+              <p class="text-xs font-bold text-brand-mauve dark:text-white">${t.title}</p>
+              <span class="text-[10px] text-rose-500 font-semibold">${t.subject} — Échéance: ${t.deadline}</span>
+            </div>
+            <i data-lucide="heart" class="w-4 h-4 text-rose-400 shrink-0"></i>
+          `;
+          remindersContainer.appendChild(div);
+        });
+      }
+    }
+
+    // --- SCHEDULE RENDERER (MOBILE) ---
+    function renderScheduleView() {
+      const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+      const dayTabsContainer = document.getElementById('schedule-day-tabs');
+      dayTabsContainer.innerHTML = '';
+
+      days.forEach(day => {
+        const btn = document.createElement('button');
+        const isActive = day === state.selectedScheduleDay;
+        btn.className = `px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition ${isActive ? 'bg-brand-rose text-white shadow-xs' : 'bg-white dark:bg-brand-mauve/60 text-brand-mauve dark:text-pink-200'}`;
+        btn.innerText = day;
+        btn.onclick = () => {
+          state.selectedScheduleDay = day;
+          renderScheduleView();
+        };
+        dayTabsContainer.appendChild(btn);
+      });
+
+      document.getElementById('mobile-schedule-day-title').innerText = state.selectedScheduleDay;
+      const contentContainer = document.getElementById('mobile-schedule-content');
+      contentContainer.innerHTML = '';
+
+      const scheduleData = {
+        'Lundi': [{ time: '08:00 – 10:00', module: 'Intro. aux Sciences Économiques', prof: 'Mme. El Kouhen', room: 'Amphi 7' }],
+        'Mardi': [
+          { time: '10:00 – 12:00', module: 'Microéconomie I', prof: 'M. Sadgui', room: 'Amphi 8' },
+          { time: '14:00 – 16:00', module: 'Mathématiques I', prof: 'M. Serhani', room: 'Amphi 4' }
+        ],
+        'Mercredi': [
+          { time: '10:00 – 12:00', module: "Économie d'Entreprise", prof: 'Mme. Benmoussa', room: 'Amphi 4' },
+          { time: '14:00 – 16:00', module: 'Méthodologie de Travail Univ.', prof: 'Mme. Annour', room: 'Amphi 9' },
+          { time: '16:00 – 18:00', module: "Intro. à l'Étude de Droit", prof: 'M. Ninou', room: 'Amphi 3' }
+        ],
+        'Jeudi': [],
+        'Vendredi': [{ time: '10:00 – 12:00', module: 'Comptabilité Générale I', prof: 'Mme. Berrada Kaoutar', room: 'Amphi 9' }]
+      };
+
+      const dayCourses = scheduleData[state.selectedScheduleDay] || [];
+      if (dayCourses.length === 0) {
+        contentContainer.innerHTML = `
+          <div class="text-center py-8 text-brand-mauveLight dark:text-pink-200/70">
+            <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2 opacity-50 text-brand-rose"></i>
+            <p class="text-sm font-semibold">Pas de cours ce jour-là !</p>
+          </div>
+        `;
+      } else {
+        dayCourses.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'p-3.5 rounded-2xl bg-brand-blush/40 dark:bg-brand-mauve/60 border border-brand-softPink/40 space-y-1';
+          card.innerHTML = `
+            <span class="text-[10px] font-bold text-brand-rose bg-white dark:bg-brand-mauve px-2 py-0.5 rounded-full shadow-xs">${c.time}</span>
+            <h4 class="font-bold text-sm text-brand-mauve dark:text-white mt-1">${c.module}</h4>
+            <div class="flex items-center gap-3 text-xs text-brand-mauveLight dark:text-pink-200/80">
+              <span>👨‍🏫 ${c.prof}</span>
+              <span>📍 ${c.room}</span>
+            </div>
+          `;
+          contentContainer.appendChild(card);
+        });
+      }
+    }
+
+    // --- REVISION VIEW RENDERER ---
+    function renderRevisionView() {
+      const container = document.getElementById('revision-list');
+      container.innerHTML = '';
+
+      state.revisions.forEach(rev => {
+        const card = document.createElement('div');
+        card.className = `bg-white/80 dark:bg-brand-mauve/40 rounded-3xl p-5 border transition-all duration-300 shadow-sm backdrop-blur-xs ${rev.completed ? 'border-emerald-400/60 opacity-90' : 'border-brand-softPink/40 dark:border-brand-mauve/40 hover:border-brand-rose/60'}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-xs font-extrabold text-brand-rose uppercase tracking-wider">${rev.day}</span>
+            <span class="text-xs px-3 py-1 rounded-full font-bold ${rev.completed ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300' : 'bg-brand-blush dark:bg-brand-mauve text-brand-mauve'}">
+              ${rev.completed ? '✓ Terminé' : rev.duration}
+            </span>
+          </div>
+          <h3 class="font-bold text-base text-brand-mauve dark:text-white mb-1">${rev.subject}</h3>
+          <p class="text-xs text-brand-mauveLight dark:text-pink-200/70 mb-4">${rev.time}</p>
+          
+          <div class="flex items-center gap-2">
+            <button onclick="openRevisionDetail('${rev.id}')" class="flex-1 py-2.5 rounded-2xl bg-brand-blush dark:bg-brand-mauve/80 hover:bg-brand-softPink/40 text-brand-mauve dark:text-pink-100 text-xs font-bold transition border border-brand-softPink/30">
+              Détails & Notes
+            </button>
+            <button onclick="quickStartRevision('${rev.id}')" class="p-2.5 rounded-2xl bg-brand-rose hover:bg-brand-roseHover text-white transition touch-target flex items-center justify-center shadow-xs">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- SUBJECTS VIEW RENDERER ---
+    function renderSubjectsView() {
+      const container = document.getElementById('subjects-grid');
+      container.innerHTML = '';
+
+      INITIAL_SUBJECTS.forEach(sub => {
+        // Calculate progress for this subject
+        const relatedRevisions = state.revisions.filter(r => r.subject.includes(sub.key) || sub.name.includes(r.subjectKey));
+        const completedCount = relatedRevisions.filter(r => r.completed).length;
+        const progress = relatedRevisions.length > 0 ? Math.round((completedCount / relatedRevisions.length) * 100) : 0;
+
+        const card = document.createElement('div');
+        card.className = 'bg-white/80 dark:bg-brand-mauve/40 rounded-3xl p-5 border border-brand-softPink/40 dark:border-brand-mauve/40 shadow-sm space-y-4 hover:shadow-md transition backdrop-blur-xs';
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr ${sub.color} text-white flex items-center justify-center shadow-md">
+              <i data-lucide="${sub.icon}" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-brand-mauve dark:text-white leading-tight">${sub.name}</h3>
+              <span class="text-xs text-brand-mauveLight dark:text-pink-200/70">${sub.sessions} session(s) / sem.</span>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-bold text-brand-mauve dark:text-pink-200">
+              <span>Progression</span>
+              <span>${progress}%</span>
+            </div>
+            <div class="w-full bg-brand-blush dark:bg-brand-mauve/60 h-2 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r ${sub.color}" style="width: ${progress}%"></div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- TASKS VIEW RENDERER ---
+    let currentTaskFilter = 'all';
+    function renderTasksView() {
+      const container = document.getElementById('tasks-list');
+      container.innerHTML = '';
+
+      let filteredTasks = state.tasks;
+      if (currentTaskFilter === 'urgent') filteredTasks = state.tasks.filter(t => t.priority === 'urgent');
+      else if (currentTaskFilter === 'pending') filteredTasks = state.tasks.filter(t => !t.completed);
+      else if (currentTaskFilter === 'completed') filteredTasks = state.tasks.filter(t => t.completed);
+
+      if (filteredTasks.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-brand-mauveLight dark:text-pink-200/70">
+            <i data-lucide="flower" class="w-10 h-10 mx-auto mb-2 opacity-40 text-brand-rose"></i>
+            <p class="text-sm font-bold">Aucune tâche ici !</p>
+          </div>
+        `;
+        return;
+      }
+
+      filteredTasks.forEach(t => {
+        const priorityColors = {
+          urgent: 'border-l-rose-400 bg-rose-50/70 dark:bg-rose-950/20',
+          important: 'border-l-amber-400 bg-amber-50/70 dark:bg-amber-950/20',
+          normal: 'border-l-pink-300 bg-pink-50/70 dark:bg-pink-950/20'
+        };
+
+        const item = document.createElement('div');
+        item.className = `p-4 rounded-2xl bg-white/80 dark:bg-brand-mauve/40 border border-brand-softPink/40 shadow-xs flex items-center justify-between gap-4 border-l-4 ${priorityColors[t.priority] || ''}`;
+        item.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTaskComplete('${t.id}')" class="w-5 h-5 rounded-full text-brand-rose focus:ring-brand-rose cursor-pointer accent-brand-rose" />
+            <div class="truncate">
+              <p class="text-sm font-bold text-brand-mauve dark:text-white truncate ${t.completed ? 'line-through opacity-60' : ''}">${t.title}</p>
+              <span class="text-xs text-brand-mauveLight dark:text-pink-200/70">${t.subject} — Échéance: ${t.deadline}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="editTask('${t.id}')" class="p-2 text-brand-mauveLight hover:text-brand-mauve dark:hover:text-white"><i data-lucide="edit" class="w-4 h-4"></i></button>
+            <button onclick="deleteTask('${t.id}')" class="p-2 text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function filterTasks(filter) {
+      currentTaskFilter = filter;
+      document.querySelectorAll('.task-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-rose', 'text-white', 'shadow-xs');
+        btn.classList.add('bg-white', 'dark:bg-brand-mauve/60', 'text-brand-mauve', 'dark:text-pink-200');
+      });
+      const activeBtn = document.getElementById(`task-filter-${filter}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-brand-rose', 'text-white', 'shadow-xs');
+        activeBtn.classList.remove('bg-white', 'dark:bg-brand-mauve/60', 'text-brand-mauve', 'dark:text-pink-200');
+      }
+      renderTasksView();
+      lucide.createIcons();
+    }
+
+    // --- STATS VIEW RENDERER ---
+    function renderStatsView() {
+      const completedSessions = state.revisions.filter(r => r.completed).length;
+      document.getElementById('stats-completed-sessions').innerText = `${completedSessions} / ${state.revisions.length}`;
+      document.getElementById('stats-completion-rate').innerText = `${Math.round((completedSessions / state.revisions.length) * 100)}%`;
+
+      // Render Progress Bars for Subjects
+      const container = document.getElementById('subject-progress-bars');
+      container.innerHTML = '';
+
+      INITIAL_SUBJECTS.forEach(sub => {
+        const related = state.revisions.filter(r => r.subject.includes(sub.key) || sub.name.includes(r.subjectKey));
+        const done = related.filter(r => r.completed).length;
+        const pct = related.length > 0 ? Math.round((done / related.length) * 100) : 0;
+
+        const div = document.createElement('div');
+        div.className = 'space-y-1';
+        div.innerHTML = `
+          <div class="flex justify-between text-xs font-bold">
+            <span class="text-brand-mauve dark:text-pink-100">${sub.name}</span>
+            <span class="text-brand-rose">${pct}%</span>
+          </div>
+          <div class="w-full bg-brand-blush dark:bg-brand-mauve/60 h-2 rounded-full overflow-hidden">
+            <div class="bg-gradient-to-r from-brand-rose to-brand-pastelPurple h-full" style="width: ${pct}%"></div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    /* ==========================================================================
+       5. TASK ACTIONS
+       ========================================================================== */
+
+    function openAddTaskModal() {
+      document.getElementById('task-id').value = '';
+      document.getElementById('task-title').value = '';
+      document.getElementById('task-priority').value = 'normal';
+      document.getElementById('task-deadline').value = '';
+      document.getElementById('task-modal-title').innerText = 'Nouvelle Tâche';
+      document.getElementById('modal-task-form').classList.remove('hidden');
+    }
+
+    function editTask(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      document.getElementById('task-id').value = task.id;
+      document.getElementById('task-title').value = task.title;
+      document.getElementById('task-subject').value = task.subject;
+      document.getElementById('task-priority').value = task.priority;
+      document.getElementById('task-deadline').value = task.deadline;
+      document.getElementById('task-modal-title').innerText = 'Modifier la Tâche';
+      document.getElementById('modal-task-form').classList.remove('hidden');
+    }
+
+    function saveTask(event) {
+      event.preventDefault();
+      const id = document.getElementById('task-id').value;
+      const title = document.getElementById('task-title').value;
+      const subject = document.getElementById('task-subject').value;
+      const priority = document.getElementById('task-priority').value;
+      const deadline = document.getElementById('task-deadline').value;
+
+      if (id) {
+        // Edit existing
+        const task = state.tasks.find(t => t.id === id);
+        if (task) {
+          task.title = title;
+          task.subject = subject;
+          task.priority = priority;
+          task.deadline = deadline;
+        }
+      } else {
+        // Create new
+        state.tasks.push({
+          id: 't-' + Date.now(),
+          title,
+          subject,
+          priority,
+          deadline,
+          completed: false
+        });
+      }
+
+      saveState();
+      closeModal('modal-task-form');
+      renderAll();
+      showToast('Tâche enregistrée ! 🌸');
+    }
+
+    function toggleTaskComplete(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        saveState();
+        renderAll();
+        showToast(task.completed ? 'Tâche marquée terminée ! 🌸' : 'Tâche réactivée');
+      }
+    }
+
+    function deleteTask(id) {
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      saveState();
+      renderAll();
+      showToast('Tâche supprimée');
+    }
+
+    /* ==========================================================================
+       6. REVISION MODALS & TIMER
+       ========================================================================== */
+
+    function openRevisionDetail(id) {
+      const rev = state.revisions.find(r => r.id === id);
+      if (!rev) return;
+      state.selectedRevisionId = id;
+
+      document.getElementById('modal-rev-day').innerText = rev.day;
+      document.getElementById('modal-rev-subject').innerText = rev.subject;
+      document.getElementById('modal-rev-time').innerText = `${rev.time} (Durée: ${rev.duration})`;
+      document.getElementById('modal-rev-notes').value = rev.notes || '';
+
+      // Checklist Render
+      const checklistContainer = document.getElementById('modal-rev-checklist');
+      checklistContainer.innerHTML = '';
+      rev.checklist.forEach((chk, idx) => {
+        const item = document.createElement('label');
+        item.className = 'flex items-center gap-3 p-3 rounded-2xl bg-brand-blush/50 dark:bg-brand-bgDark border border-brand-softPink/40 cursor-pointer text-xs font-semibold text-brand-mauve dark:text-pink-200';
+        item.innerHTML = `
+          <input type="checkbox" ${chk.done ? 'checked' : ''} onchange="toggleChecklistItem(${idx})" class="w-4 h-4 rounded text-brand-rose accent-brand-rose" />
+          <span>${chk.text}</span>
+        `;
+        checklistContainer.appendChild(item);
+      });
+
+      // Bind action buttons
+      document.getElementById('modal-rev-start-btn').onclick = () => {
+        closeModal('modal-revision-detail');
+        startFocusedStudySession(rev);
+      };
+
+      document.getElementById('modal-rev-complete-btn').onclick = () => {
+        rev.completed = true;
+        rev.notes = document.getElementById('modal-rev-notes').value;
+        saveState();
+        closeModal('modal-revision-detail');
+        renderAll();
+        showToast('Séance marquée terminée ! Bravo 🌸');
+      };
+
+      document.getElementById('modal-revision-detail').classList.remove('hidden');
+    }
+
+    function toggleChecklistItem(index) {
+      const rev = state.revisions.find(r => r.id === state.selectedRevisionId);
+      if (rev && rev.checklist[index]) {
+        rev.checklist[index].done = !rev.checklist[index].done;
+        saveState();
+      }
+    }
+
+    function quickStartRevision(id) {
+      const rev = state.revisions.find(r => r.id === id);
+      if (rev) startFocusedStudySession(rev);
+    }
+
+    function startFocusedStudySession(revObject) {
+      const rev = revObject || state.revisions[0];
+      document.getElementById('timer-subject-name').innerText = rev.subject;
+      document.getElementById('timer-objective-text').innerText = rev.checklist[0]?.text || 'Bloc d’étude concentré';
+
+      timerSecondsLeft = 50 * 60; // Reset 50 minutes
+      timerPhase = 'work';
+      updateTimerDisplay();
+
+      document.getElementById('modal-timer').classList.remove('hidden');
+      runTimer();
+    }
+
+    function runTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = true;
+      document.getElementById('btn-timer-toggle').innerHTML = `<i data-lucide="pause" class="w-5 h-5 fill-current"></i> Pause`;
+
+      timerInterval = setInterval(() => {
+        if (timerSecondsLeft > 0) {
+          timerSecondsLeft--;
+          updateTimerDisplay();
+        } else {
+          clearInterval(timerInterval);
+          if (timerPhase === 'work') {
+            timerPhase = 'break';
+            timerSecondsLeft = 10 * 60; // 10 min break
+            document.getElementById('timer-phase-badge').innerText = 'PAUSE CAFÉ & THÉ (10 MIN) ☕';
+            showToast('Bravo ! Fais une douce pause de 10 minutes. 🌺');
+            runTimer();
+          } else {
+            showToast('Session terminée avec succès ! 🌸');
+            closeStudyTimer();
+          }
+        }
+      }, 1000);
+      lucide.createIcons();
+    }
+
+    function toggleTimer() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById('btn-timer-toggle').innerHTML = `<i data-lucide="play" class="w-5 h-5 fill-current"></i> Reprendre`;
+      } else {
+        runTimer();
+      }
+      lucide.createIcons();
+    }
+
+    function finishStudyTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      closeStudyTimer();
+      showToast('Séance d’étude enregistrée ! 🌸');
+    }
+
+    function closeStudyTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      document.getElementById('modal-timer').classList.add('hidden');
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSecondsLeft / 60);
+      const secs = timerSecondsLeft % 60;
+      document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    /* ==========================================================================
+       7. SUNDAY REVIEW & HELPERS
+       ========================================================================== */
+
+    function openSundayReviewModal() {
+      const total = state.revisions.length;
+      const completed = state.revisions.filter(r => r.completed).length;
+      const tasksCompleted = state.tasks.filter(t => t.completed).length;
+      const pct = Math.round((completed / total) * 100);
+
+      document.getElementById('review-sessions-completed').innerText = `${completed} / ${total}`;
+      document.getElementById('review-tasks-completed').innerText = tasksCompleted;
+
+      const motivationBox = document.getElementById('review-motivation-box');
+      if (pct >= 80) {
+        motivationBox.innerHTML = `🌸 Magnifique ! Ton assiduité est inspirante. Continue de faire fleurir ton savoir !`;
+      } else if (pct >= 50) {
+        motivationBox.innerHTML = `💪 Très bon travail. Tu avances à ton rythme avec élégance et constance !`;
+      } else {
+        motivationBox.innerHTML = `🌱 Chaque jour est une nouvelle chance d'éclore. Reprends avec douceur.`;
+      }
+
+      document.getElementById('modal-sunday-review').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = message;
+      toast.classList.remove('translate-x-full', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0');
+      }, 3000);
+    }
+
+    /* ==========================================================================
+       8. CHART.JS INTEGRATION
+       ========================================================================== */
+
+    let hoursChart = null;
+    function initChart() {
+      const ctx = document.getElementById('weeklyHoursChart').getContext('2d');
+      hoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+          datasets: [{
+            label: "Heures d'étude",
+            data: [1.5, 1.5, 1.5, 2.0, 1.5, 2.0, 2.0],
+            backgroundColor: '#E88BAA',
+            borderRadius: 12
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(232, 139, 170, 0.15)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartData() {
+      if (!hoursChart) return;
+      hoursChart.update();
+    }
+  </script>
+</body>
+</html>
